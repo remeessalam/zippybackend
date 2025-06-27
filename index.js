@@ -4,16 +4,24 @@ import mongoose from "mongoose";
 import cors from "cors";
 import { errorHandler } from "./middleware/errorHandler.js";
 import productRoutes from "./routes/productRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
+import wishlistRoutes from "./routes/wishlistRouter.js";
+import orderRoutes from "./routes/orderRoutes.js";
 const app = express();
 
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.send("Shopque backend is running on port 8080");
+  res.send("zippty backend is running on port 8080");
 });
 // Routes
+app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/orders", orderRoutes);
 
 app.use(errorHandler);
 
@@ -21,7 +29,7 @@ console.log("refresh");
 // Error Handling Middleware
 
 // MongoDB Connection
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 7070;
 mongoose
   .connect(process.env.MONGO_URI, {
     serverSelectionTimeoutMS: 30000,
