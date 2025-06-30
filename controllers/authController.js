@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
 // Utility function to validate email format
 const isValidEmail = (email) => {
@@ -41,20 +42,14 @@ export const login = async (req, res) => {
     }
 
     // Check password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({
-        message: "Invalid credentials",
-        error: "Incorrect password",
-      });
-    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch)
+      return res
+        .status(400)
+        .json({ status: false, message: "Invalid credentials" });
 
     // Generate JWT
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" } // Token expires in 1 day
-    );
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
 
     res.status(200).json({
       message: "Login successful",
@@ -119,15 +114,13 @@ export const signup = async (req, res) => {
         error: "Duplicate email",
       });
     }
-
+    const hashedPassword = await bcrypt.hash(password, 10);
     // Create user
-    const user = new User({ name, email, password });
+    const user = new User({ name, email, password: hashedPassword });
     await user.save();
 
     // Generate JWT
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
-    });
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
 
     res.status(201).json({
       message: "Signup successful",
