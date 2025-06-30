@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
+import serverless from "serverless-http";
+
 import { errorHandler } from "./middleware/errorHandler.js";
 import productRoutes from "./routes/productRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -48,3 +50,4 @@ mongoose
 // app.use(serverless(app)); // Ensure this is the last middleware
 
 export default app;
+export const handler = serverless(app);
