@@ -12,10 +12,10 @@ cloudinaryV2.config({
 });
 
 // Ensure uploads directory exists
-const uploadDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// const uploadDir = path.join(process.cwd(), "uploads");
+// if (!fs.existsSync(uploadDir)) {
+//   fs.mkdirSync(uploadDir, { recursive: true });
+// }
 
 // Add a new product (Protected)
 const addProduct = async (req, res) => {
