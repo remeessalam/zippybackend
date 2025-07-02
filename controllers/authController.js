@@ -1,21 +1,20 @@
-import User from "../models/User.js";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+import Admin from "../models/Admin.js";
 
-// Utility function to validate email format
 const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
-// Utility function to validate password strength
 const isValidPassword = (password) => {
-  return password.length >= 6; // Minimum 6 characters
+  return password.length >= 6;
 };
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, admin } = req.body;
 
     // Validate input
     if (!email || !password) {
@@ -32,8 +31,11 @@ export const login = async (req, res) => {
       });
     }
 
-    // Find user
-    const user = await User.findOne({ email }).select("+password");
+    // Choose model based on admin flag
+    const Model = admin ? Admin : User;
+
+    // Find user/admin
+    const user = await Model.findOne({ email }).select("+password");
     if (!user) {
       return res.status(401).json({
         message: "Invalid credentials",
@@ -43,13 +45,27 @@ export const login = async (req, res) => {
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res
-        .status(400)
-        .json({ status: false, message: "Invalid credentials" });
+    if (!isMatch) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid credentials",
+        error: "Incorrect password",
+      });
+    }
+
+    // Verify admin status
+    if (admin && !user.isAdmin) {
+      return res.status(403).json({
+        message: "Access denied, admin privileges required",
+        error: "Not an admin",
+      });
+    }
 
     // Generate JWT
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
+    const token = jwt.sign(
+      { userId: user._id, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET
+    );
 
     res.status(200).json({
       message: "Login successful",
@@ -58,6 +74,7 @@ export const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        isAdmin: user.isAdmin,
       },
     });
   } catch (error) {
@@ -82,7 +99,7 @@ export const login = async (req, res) => {
 
 export const signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, admin } = req.body;
 
     // Validate input
     if (!name || !email || !password) {
@@ -106,21 +123,33 @@ export const signup = async (req, res) => {
       });
     }
 
-    // Check for existing user
-    const existingUser = await User.findOne({ email });
+    // Choose model based on admin flag
+    const Model = admin ? Admin : User;
+
+    // Check for existing user/admin
+    const existingUser = await Model.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
         message: "Email already exists",
         error: "Duplicate email",
       });
     }
+
+    // Create user/admin
     const hashedPassword = await bcrypt.hash(password, 10);
-    // Create user
-    const user = new User({ name, email, password: hashedPassword });
+    const user = new Model({
+      name,
+      email,
+      password: hashedPassword,
+      isAdmin: admin || false,
+    });
     await user.save();
 
     // Generate JWT
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
+    const token = jwt.sign(
+      { userId: user._id, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET
+    );
 
     res.status(201).json({
       message: "Signup successful",
@@ -129,6 +158,7 @@ export const signup = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        isAdmin: user.isAdmin,
       },
     });
   } catch (error) {
