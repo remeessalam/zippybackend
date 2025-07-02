@@ -5,10 +5,9 @@ import path from "path";
 
 // Configure Cloudinary
 cloudinaryV2.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "dwd4t4ecw",
-  api_key: process.env.CLOUDINARY_API_KEY || "266877444492654",
-  api_secret:
-    process.env.CLOUDINARY_API_SECRET || "1y1xytSNNzjWZSBa1iF7D6f9dM8",
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 // Ensure uploads directory exists
